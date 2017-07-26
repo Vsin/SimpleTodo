@@ -1,6 +1,9 @@
 package com.phivle.simpletodo;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -8,6 +11,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.phivle.simpletodo.db.TaskContract;
+import com.phivle.simpletodo.db.TaskDbHelper;
 
 import org.apache.commons.io.FileUtils;
 
@@ -19,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> items;
     ArrayAdapter<String> itemsAdapter;
     ListView lvItems;
+    TaskDbHelper mHelper;
 
     private final int REQUEST_CODE = 20;
 
@@ -28,10 +35,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         lvItems = (ListView) findViewById(R.id.lvItems);
         items = new ArrayList<>();
-        readItems();
-        itemsAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1, items);
-        lvItems.setAdapter(itemsAdapter);
+        updateDisplayedItems();
         setupListViewListener();
     }
 
@@ -41,9 +45,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean onItemLongClick(AdapterView<?> adapter,
                                                    View item, int pos, long id) {
-                        items.remove(pos);
-                        itemsAdapter.notifyDataSetChanged();
-                        writeItems();
+                        deleteItem(pos);
                         return true;
                     }
                 }
@@ -61,7 +63,45 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    public void launchEditIntent(String editItemText, int pos) {
+    private void updateDisplayedItems() {
+
+        mHelper = new TaskDbHelper(this);
+        SQLiteDatabase db = mHelper.getReadableDatabase();
+        Cursor cursor = db.query(TaskContract.TaskEntry.TABLE,
+                new String[]{TaskContract.TaskEntry._ID, TaskContract.TaskEntry.COL_TASK_TITLE},
+                null, null, null, null, null);
+        while (cursor.moveToNext()) {
+            int idx = cursor.getColumnIndex(TaskContract.TaskEntry.COL_TASK_TITLE);
+            items.add(cursor.getString(idx));
+        }
+
+        if (itemsAdapter == null) {
+            itemsAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_list_item_1, items);
+            lvItems.setAdapter(itemsAdapter);
+        } else {
+            itemsAdapter.clear();
+            itemsAdapter.addAll(items);
+            itemsAdapter.notifyDataSetChanged();
+        }
+
+        cursor.close();
+        db.close();
+    }
+
+    private void deleteItem(int pos) {
+        mHelper = new TaskDbHelper(this);
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+
+        db.delete(TaskContract.TaskEntry.TABLE, TaskContract.TaskEntry.COL_TASK_TITLE + " = ?", new String[] { items.get(pos)});
+
+        db.close();
+
+        items.remove(pos);
+        itemsAdapter.notifyDataSetChanged();
+    }
+
+    private void launchEditIntent(String editItemText, int pos) {
         Intent editItemIntent = new Intent(MainActivity.this, EditItemActivity.class);
         editItemIntent.putExtra("editItem", editItemText);
         editItemIntent.putExtra("editItemIndex", pos);
@@ -73,37 +113,31 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
             String editedItemText = data.getExtras().getString("editedItemText");
             int editedItemIndex = data.getExtras().getInt("editedItemIndex");
+            SQLiteDatabase db = mHelper.getWritableDatabase();
+
+            ContentValues values = new ContentValues();
+            values.put(TaskContract.TaskEntry.COL_TASK_TITLE, editedItemText);
+
+            db.update(TaskContract.TaskEntry.TABLE, values, TaskContract.TaskEntry.COL_TASK_TITLE + " = ?", new String[] { editedItemText });
+            db.close();
+
             items.set(editedItemIndex, editedItemText);
             itemsAdapter.notifyDataSetChanged();
-            writeItems();
         }
     }
 
     public void onAddItem(View v) {
         EditText etNewItem = (EditText) findViewById(R.id.etNewItem);
         String itemText = etNewItem.getText().toString();
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(TaskContract.TaskEntry.COL_TASK_TITLE, itemText);
+        db.insertWithOnConflict(TaskContract.TaskEntry.TABLE,
+                null,
+                values,
+                SQLiteDatabase.CONFLICT_REPLACE);
+        db.close();
         itemsAdapter.add(itemText);
         etNewItem.setText("");
-        writeItems();
-    }
-
-    private void readItems() {
-        File filesDir = getFilesDir();
-        File todoFile = new File(filesDir, "todo.txt");
-        try {
-            items = new ArrayList<String>(FileUtils.readLines(todoFile));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void writeItems() {
-        File filesDir = getFilesDir();
-        File todoFile = new File(filesDir, "todo.txt");
-        try {
-            FileUtils.writeLines(todoFile, items);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
