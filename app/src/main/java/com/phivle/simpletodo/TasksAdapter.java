@@ -1,6 +1,7 @@
 package com.phivle.simpletodo;
 
 import android.content.Context;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,11 @@ import java.util.ArrayList;
  */
 
 public class TasksAdapter extends ArrayAdapter<Task> {
+
+    private static class ViewHolder {
+        TextView taskText;
+    }
+
     public TasksAdapter(Context context, ArrayList<Task> tasks) {
         super(context, 0, tasks);
     }
@@ -21,14 +27,22 @@ public class TasksAdapter extends ArrayAdapter<Task> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Task task;
-        task = getItem(position);
+        TextView taskText;
+
+        ViewHolder viewHolder;
 
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.task_item, parent, false);
+            viewHolder = new ViewHolder();
+            LayoutInflater inflater = LayoutInflater.from(getContext());
+            convertView = inflater.inflate(R.layout.task_item, parent, false);
+            viewHolder.taskText = (TextView) convertView.findViewById(R.id.taskText);
+            convertView.setTag(viewHolder);
+        } else {
+            viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        TextView taskText;
         taskText = (TextView) convertView.findViewById(R.id.taskText);
+        task = getItem(position);
 
         taskText.setText(task.text);
 
