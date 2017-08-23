@@ -8,23 +8,42 @@
 
     <EditText
         android:id="@+id/etEditItem"
-        android:layout_width="241dp"
-        android:layout_height="46dp"
+        android:layout_width="348dp"
+        android:layout_height="281dp"
         android:ems="10"
         android:inputType="textMultiLine"
-        android:layout_marginLeft="8dp"
+        android:layout_marginLeft="16dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_bias="0.23"
+        tools:layout_editor_absoluteX="18dp" />
 
     <Button
         android:id="@+id/saveButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="447dp"
         android:onClick="onSave"
         android:text="Save"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/etEditItemDueDate"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="8dp"
+        android:hint="Click to add due date"
+        android:onClick="showDatePicker"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etEditItem"
+        android:layout_marginRight="8dp"
+        app:layout_constraintHorizontal_bias="0.63"
+        app:layout_constraintRight_toRightOf="parent" />
+
 </android.support.constraint.ConstraintLayout>

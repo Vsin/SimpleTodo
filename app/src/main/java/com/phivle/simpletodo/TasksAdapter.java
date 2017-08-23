@@ -8,6 +8,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**
@@ -18,6 +20,7 @@ public class TasksAdapter extends ArrayAdapter<Task> {
 
     private static class ViewHolder {
         TextView taskText;
+        TextView taskDue;
     }
 
     public TasksAdapter(Context context, ArrayList<Task> tasks) {
@@ -27,8 +30,6 @@ public class TasksAdapter extends ArrayAdapter<Task> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Task task;
-        TextView taskText;
-
         ViewHolder viewHolder;
 
         if (convertView == null) {
@@ -36,15 +37,20 @@ public class TasksAdapter extends ArrayAdapter<Task> {
             LayoutInflater inflater = LayoutInflater.from(getContext());
             convertView = inflater.inflate(R.layout.task_item, parent, false);
             viewHolder.taskText = (TextView) convertView.findViewById(R.id.taskText);
+            viewHolder.taskDue = (TextView) convertView.findViewById(R.id.taskDue);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        taskText = (TextView) convertView.findViewById(R.id.taskText);
         task = getItem(position);
 
-        taskText.setText(task.text);
+        viewHolder.taskText.setText(task.text);
+        if (task.dueDate != null) {
+            viewHolder.taskDue.setText(task.dueDateString());
+        } else {
+            viewHolder.taskDue.setText("");
+        }
 
         return convertView;
     }

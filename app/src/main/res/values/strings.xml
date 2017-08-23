@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SimpleTodo</string>
+    <string name="date_picker_title">Choose your due date</string>
 </resources>

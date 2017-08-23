@@ -6,8 +6,8 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -86,7 +86,12 @@ public class MainActivity extends AppCompatActivity {
         try {
             db = mHelper.getReadableDatabase();
             cursor = db.query(TaskContract.TaskEntry.TABLE,
-                    new String[]{TaskContract.TaskEntry._ID, TaskContract.TaskEntry.COL_TASK_TEXT},
+                    new String[]
+                            {
+                                    TaskContract.TaskEntry._ID,
+                                    TaskContract.TaskEntry.COL_TASK_TEXT,
+                                    TaskContract.TaskEntry.COL_TASK_DUE
+                            },
                     null, null, null, null, null);
             while (cursor.moveToNext()) {
                 items.add(new Task(cursor));
@@ -120,6 +125,11 @@ public class MainActivity extends AppCompatActivity {
         Intent editItemIntent = new Intent(MainActivity.this, EditItemActivity.class);
         editItemIntent.putExtra("editItemId", editItemTask.id);
         editItemIntent.putExtra("editItemText", editItemTask.text);
+
+        if (editItemTask.dueDate != null) {
+
+            editItemIntent.putExtra("editItemDueDate", editItemTask.dueDateString());
+        }
         editItemIntent.putExtra("editItemIndex", pos);
         startActivityForResult(editItemIntent, REQUEST_CODE);
     }
@@ -128,14 +138,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
             String editedItemText;
+            String editedItemDueDate;
             int editedItemIndex;
-            int editedItemId;
+            long editedItemId;
             SQLiteDatabase db = null;
             ContentValues values;
 
             editedItemText = data.getExtras().getString("editedItemText");
+            editedItemDueDate = data.getExtras().getString("editedItemDueDate");
             editedItemIndex = data.getExtras().getInt("editedItemIndex");
-            editedItemId = data.getExtras().getInt("editedItemId");
+            editedItemId = data.getExtras().getLong("editedItemId");
 
             try {
                 db = mHelper.getWritableDatabase();
@@ -144,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
 
             values = new ContentValues();
             values.put(TaskContract.TaskEntry.COL_TASK_TEXT, editedItemText);
+            values.put(TaskContract.TaskEntry.COL_TASK_DUE, editedItemDueDate);
 
             if (db != null) {
                 db.update(TaskContract.TaskEntry.TABLE, values,
@@ -152,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 db.close();
             }
 
-            items.set(editedItemIndex, new Task(editedItemId, editedItemText));
+            items.set(editedItemIndex, new Task(editedItemId, editedItemText, editedItemDueDate));
             taskAdapter.notifyDataSetChanged();
         }
     }
@@ -173,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
 
         values = new ContentValues();
         values.put(TaskContract.TaskEntry.COL_TASK_TEXT, itemText);
+        values.putNull(TaskContract.TaskEntry.COL_TASK_DUE);
 
         if (db != null) {
             itemId = db.insertWithOnConflict(TaskContract.TaskEntry.TABLE,
@@ -182,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
             db.close();
         }
 
-        taskAdapter.add(new Task(itemId, itemText));
+        taskAdapter.add(new Task(itemId, itemText, null));
         etNewItem.setText("");
     }
 }
